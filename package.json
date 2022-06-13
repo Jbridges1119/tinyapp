@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Jbridges1119/tinyapp/issues"
   },
-  "homepage": "https://github.com/Jbridges1119/tinyapp#readme"
+  "homepage": "https://github.com/Jbridges1119/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
