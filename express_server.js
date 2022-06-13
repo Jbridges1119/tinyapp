@@ -47,3 +47,13 @@ app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   res.send("Ok");         // Respond with 'Ok' (we will replace this)
 });
+
+
+function generateRandomString() {
+    const character = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let key = ""
+    while (key.length < 6){
+    key += character.charAt(Math.floor(Math.random() * 62))
+    return key
+    }
+}
