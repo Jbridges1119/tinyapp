@@ -4,16 +4,19 @@ const PORT = 8080; // default port 8080
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 
+
 //MIDDLEWARE BEING RUN
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
+
 
 //URL DATABASE
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
 
 //SEND TEXT SAYING HELLO
 app.get("/", (req, res) => {
@@ -45,6 +48,7 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+
 //Create new url page
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
@@ -66,7 +70,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 //SUBMIT EDITED ULR
 app.post('/urls/:shortURL', (req, res) => {
-  console.log(req.params)
+  console.log(req.body)
   urlDatabase[req.params.shortURL] = req.body.longURL
   res.redirect(`/urls`)
 })
