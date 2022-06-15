@@ -80,7 +80,7 @@ app.get("/u/:shortURL", (req, res) => {
     username: req.cookies["username"],
   };
   const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL, templateVars);
+  res.redirect(longURL);
 });
 
 //SUBMIT LOGIN
