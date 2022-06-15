@@ -3,11 +3,16 @@ const app = express();
 const PORT = 8080; // default port 8080
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
 
 //MIDDLEWARE BEING RUN
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
+app.use(cookieParser())
+
+//Middleware to allow object/array deconstruction
+app.use(express.urlencoded({ extended: true}))
 
 //URL DATABASE
 const urlDatabase = {
@@ -37,17 +42,28 @@ app.listen(PORT, () => {
 
 //REQUEST CREATE TINYURL PAGE
 app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render('urls_new', templateVars);
 });
 
 //REQUEST MAIN PAGE
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
-//Create new url page
+
+//REQUEST CREATE NEW URL PAGE
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  const templateVars = { 
+    shortURL: req.params.shortURL, 
+    longURL: urlDatabase[req.params.shortURL], 
+    username: req.cookies["username"]
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -60,22 +76,36 @@ app.post("/urls", (req, res) => {
 
 //REQUEST SPECIFIC SHORT URL INFO / EDIT PAGE
 app.get("/u/:shortURL", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+  };
   const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  res.redirect(longURL, templateVars);
+});
+
+//SUBMIT LOGIN
+app.post('/login', (req, res) => {
+  res.cookie("username", req.body.username);
+  res.redirect(`/urls`);
+});
+
+//SUBMIT LOGOUT
+app.post('/logout', (req, res) => {
+  res.clearCookie('username')
+  res.redirect(`/urls`)
 });
 
 //SUBMIT EDITED ULR
 app.post('/urls/:shortURL', (req, res) => {
-  console.log(req.params)
-  urlDatabase[req.params.shortURL] = req.body.longURL
-  res.redirect(`/urls`)
-})
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect(`/urls`);
+});
 
 //DELETE URL
 app.post("/urls/:shortURL/delete", (req,res) => {
-   delete urlDatabase[req.params.shortURL]
-  res.redirect(`/urls`)
-})
+  delete urlDatabase[req.params.shortURL];
+  res.redirect(`/urls`);
+});
 
 
 //GENERATE RANDOM SHORT URL KEY
