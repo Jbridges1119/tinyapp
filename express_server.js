@@ -22,6 +22,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//USER DATA STORAGE
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "u@a.com", 
+    password: "purple"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "u2@a.com", 
+    password: "funk"
+  }
+}
 
 //SEND TEXT SAYING HELLO
 app.get("/", (req, res) => {
@@ -42,6 +55,14 @@ app.get("/hello", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+//REQUEST REGISTRATION PAGE
+app.get(`/register`, (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render(`register`, templateVars)
+})
 
 //REQUEST CREATE TINYURL PAGE
 app.get('/urls/new', (req, res) => {
