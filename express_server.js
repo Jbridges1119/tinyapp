@@ -1,28 +1,39 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const PORT = 8080; // default port 8080
 
 
 //MIDDLEWARE BEING RUN
 app.use(morgan('dev'));
+//Middleware to allow object/array deconstruction
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(cookieParser());
 
-//Middleware to allow object/array deconstruction
-app.use(express.urlencoded({ extended: true}));
 
+
+
+///
+//
+
+//DATA
 
 //URL DATABASE
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "sgq3y6"
+  }
 };
 
-//USER DATA STORAGE
+//USER DATABASE
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -36,7 +47,12 @@ const users = {
   }
 };
 
-//GENERATE RANDOM SHORT URL KEY
+//
+//
+
+//FUNCTIONS
+
+//GENERATES RANDOM SHORTURL KEY
 const generateRandomString = () => {
   const character = 'AaBbCcDdEeFfGgHhIiJjKkLl0123456789MmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789';
   let key = "";
@@ -46,7 +62,7 @@ const generateRandomString = () => {
   return key;
 };
 
-//EMAIL AVAILABILITY FUNCTION
+//CHECKS EMAIL AVAILABILITY
 const emailNotPresent = (newEmail, users) => {
   for (let key in users) {
     if (newEmail === users[key]["email"]) {
@@ -55,6 +71,7 @@ const emailNotPresent = (newEmail, users) => {
   } return true;
 };
 
+//LOCATES ID BY EMAIL
 const locateID = (emailSubmitted, users) => {
   for (let key in users) {
     if (emailSubmitted === users[key]["email"]) {
@@ -62,6 +79,37 @@ const locateID = (emailSubmitted, users) => {
     }
   }
 };
+
+//CHECKS FOR URL IN DATABASE
+const urlIsPresent = (shortURL, data) => {
+  for (let key in data) {
+    if (key === shortURL) {
+      return true;
+    }
+  } return false;
+};
+
+//CREATES LIST OF USERS URL
+const urlForUser = (id) => {
+  let result = {};
+  for (let key in urlDatabase) {
+    if (id === urlDatabase[key].userID)
+      result[key] = urlDatabase[key];
+  }
+  return result;
+};
+
+//CHECKS IF NOT LOGGED IN AND IF SO, ROUTES THEM TO A LOGIN PAGE
+const notLoggedIn = (req, res) => {
+  if (!req.cookies["user_id"]) {
+    res.status(403).send('Please Login or Register');
+  }
+};
+
+//
+//
+
+//ROUTES
 
 //SEND TEXT SAYING HELLO
 app.get("/", (req, res) => {
@@ -83,6 +131,7 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+
 //REQUEST REGISTRATION PAGE
 app.get(`/register`, (req, res) => {
   const templateVars = {
@@ -90,6 +139,7 @@ app.get(`/register`, (req, res) => {
   };
   res.render(`register`, templateVars);
 });
+
 
 //REQUEST LOGIN PAGE
 app.get('/login', (req, res) => {
@@ -99,46 +149,77 @@ app.get('/login', (req, res) => {
   res.render(`login`, templateVars);
 });
 
-//REQUEST CREATE TINYURL PAGE
+
+//REQUEST CREATE PAGE
 app.get('/urls/new', (req, res) => {
   const templateVars = {
     username: users[req.cookies["user_id"]]
   };
+  //If not logged in - render login page
+  if (!templateVars.username) {
+    res.render('login', templateVars);
+  }
   res.render('urls_new', templateVars);
 });
 
+
 //REQUEST MAIN PAGE
 app.get("/urls", (req, res) => {
+//If not logged in - returns error
+  notLoggedIn(req, res);
+  const user = users[req.cookies["user_id"]];
+  const userURL = urlForUser(user.id);
   const templateVars = {
-    urls: urlDatabase,
-    username: users[req.cookies["user_id"]]
+    urls: userURL,
+    username: user
   };
   res.render("urls_index", templateVars);
 });
 
-//REQUEST CREATE NEW URL PAGE
+
+//REQUEST EDIT URL PAGE
 app.get("/urls/:shortURL", (req, res) => {
+//If not logged in - returns error
+  notLoggedIn(req, res);
+  const user = users[req.cookies["user_id"]];
+  const userURL = urlForUser(user.id);
+  //If URL is not linked to user - return error
+  if (!userURL[req.params.shortURL]) {
+    res.status(400).send('URL not linked to this user');
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: userURL[req.params.shortURL]["longURL"],
     username: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
 });
 
-//SUBMITTING NEW URL
-app.post("/urls", (req, res) => {
-  const key = generateRandomString();
-  urlDatabase[key] = req.body.longURL;
-  res.redirect(`/urls/${key}`);
-});
 
-//REQUEST SPECIFIC SHORT URL INFO / EDIT PAGE
+//REQUEST LONG URL ROUTE (IS A GET BECAUSE THE SOURCE IS AN <A> LINK - TREAT LIKE A POST WITH THE REDIRECT)
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+//If wrong URL is inputed - returns an error
+  if (!urlIsPresent(req.params.shortURL, urlDatabase)) {
+    res.status(400).send('Incorrect Short URL');
+  }
+  const longURL = urlDatabase[req.params.shortURL]["longURL"];
   res.redirect(longURL);
 });
 
+//
+//
+
+//SUBMITTING NEW URL
+app.post("/urls", (req, res) => {
+  //If not logged in on submit new - returns an error
+  if (!users[req.cookies["user_id"]]) {
+    res.status(403).send('Not logged In');
+  }
+  const key = generateRandomString();
+  urlDatabase[key] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
+  res.redirect(`/urls/${ key }`);
+});
+  
 
 //SUBMIT REGISTER
 app.post('/register', (req, res) => {
@@ -146,11 +227,11 @@ app.post('/register', (req, res) => {
   const {email, password} = req.body;
   //If email or password are blank - return an error
   if (email === "" || password === "") {
-    return res.status(400).send('Empty Email or Password');
+    res.status(400).send('Empty Email or Password');
   }
   //If email is taken - return an error
   if (!emailNotPresent(email, users)) {
-    return res.status(400).send('Email already taken');
+    res.status(400).send('Email already taken');
   }
   users[id] = {
     "id": id,
@@ -168,11 +249,11 @@ app.post('/login', (req, res) => {
   const user = locateID(email, users);
   //If email isn't in database - return an error
   if (emailNotPresent(email, users)) {
-    return res.status(403).send('Incorrect Email');
+    res.status(403).send('Incorrect Email');
   }
   //If email is located but password does not match - return error
   if (password !== users[user]["password"]) {
-    return res.status(403).send('Incorrect Password');
+    res.status(403).send('Incorrect Password');
   }
   res.cookie("user_id", user);
   res.redirect(`/urls`);
@@ -188,15 +269,25 @@ app.post('/logout', (req, res) => {
 
 //SUBMIT EDITED ULR
 app.post('/urls/:shortURL', (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
+  //If not logged in or If url not linked to user - return error
+  if (!req.cookies["user_id"]) {
+    res.status(403).send('Not logged in');
+  } else if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL]["userID"]) {
+    res.status(403).send('URL not linked to this user');
+  }
+  urlDatabase[req.params.shortURL]["longURL"] = req.body.longURL;
   res.redirect(`/urls`);
 });
 
 
 //DELETE URL
 app.post("/urls/:shortURL/delete", (req,res) => {
+  //If not logged in or If url not linked to user - return error
+  if (!req.cookies["user_id"]) {
+    res.status(403).send('Not logged in');
+  } else if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL]["userID"]) {
+    res.status(403).send('URL not linked to this user');
+  }
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
-
-
