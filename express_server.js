@@ -38,7 +38,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//SERVER RESPONSE WHEN STARTED
+//SERVER RESPONSE IN CONSOLE WHEN STARTED
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -119,4 +119,4 @@ const generateRandomString = () => {
     key += character.charAt(Math.floor(Math.random() * 62));
   }
   return key;
-}
+};
