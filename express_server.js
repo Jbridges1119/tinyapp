@@ -3,16 +3,16 @@ const app = express();
 const PORT = 8080; // default port 8080
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
 
 //MIDDLEWARE BEING RUN
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
-app.use(cookieParser())
+app.use(cookieParser());
 
 //Middleware to allow object/array deconstruction
-app.use(express.urlencoded({ extended: true}))
+app.use(express.urlencoded({ extended: true}));
 
 //URL DATABASE
 const urlDatabase = {
@@ -50,7 +50,7 @@ app.get('/urls/new', (req, res) => {
 
 //REQUEST MAIN PAGE
 app.get("/urls", (req, res) => {
-  const templateVars = { 
+  const templateVars = {
     urls: urlDatabase,
     username: req.cookies["username"]
   };
@@ -59,9 +59,9 @@ app.get("/urls", (req, res) => {
 
 //REQUEST CREATE NEW URL PAGE
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { 
-    shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL], 
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
     username: req.cookies["username"]
   };
   res.render("urls_show", templateVars);
@@ -91,8 +91,8 @@ app.post('/login', (req, res) => {
 
 //SUBMIT LOGOUT
 app.post('/logout', (req, res) => {
-  res.clearCookie('username')
-  res.redirect(`/urls`)
+  res.clearCookie('username');
+  res.redirect(`/urls`);
 });
 
 //SUBMIT EDITED ULR
@@ -109,7 +109,7 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 
 
 //GENERATE RANDOM SHORT URL KEY
-function generateRandomString() {
+const generateRandomString = () => {
   const character = 'AaBbCcDdEeFfGgHhIiJjKkLl0123456789MmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789';
   let key = "";
   while (key.length < 6) {
