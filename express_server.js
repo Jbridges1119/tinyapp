@@ -3,6 +3,7 @@ const app = express();
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const PORT = 8080; // default port 8080
 
 
@@ -224,6 +225,7 @@ app.post("/urls/new", (req, res) => {
 app.post('/register', (req, res) => {
   const id = generateRandomString();
   const { email, password } = req.body;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   //If email or password are blank - returns an error
   if (email === "" || password === "") {
     return res.status(400).send('Empty Email or Password');
@@ -235,8 +237,9 @@ app.post('/register', (req, res) => {
   users[id] = {
     "id": id,
     "email": email,
-    "password": password
+    "password": hashedPassword
   };
+  console.log(users)
   res.cookie("user_id", id);
   res.redirect('/urls');
 });
@@ -251,7 +254,7 @@ app.post('/login', (req, res) => {
     return res.status(403).send('Incorrect Email');
   }
   //If email is located but password does not match - returns an error
-  if (password !== users[user]["password"]) {
+  if (!bcrypt.compareSync(password, users[user]["password"])) {
     return res.status(403).send('Incorrect Password');
   }
   res.cookie("user_id", user);
