@@ -9,11 +9,9 @@ const PORT = 8080; // default port 8080
 //MIDDLEWARE BEING RUN
 app.use(morgan('dev'));
 //Middleware to allow object/array deconstruction
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.use(cookieParser());
-
-
 
 
 ///
@@ -47,6 +45,7 @@ const users = {
   }
 };
 
+
 //
 //
 
@@ -72,7 +71,7 @@ const emailNotPresent = (newEmail, users) => {
 };
 
 //LOCATES ID BY EMAIL
-const locateID = (emailSubmitted, users) => {
+const locateUserIdByEmail = (emailSubmitted, users) => {
   for (let key in users) {
     if (emailSubmitted === users[key]["email"]) {
       return key;
@@ -99,12 +98,6 @@ const urlForUser = (id) => {
   return result;
 };
 
-//CHECKS IF NOT LOGGED IN AND IF SO, ROUTES THEM TO A LOGIN PAGE
-const notLoggedIn = (req, res) => {
-  if (!req.cookies["user_id"]) {
-    res.status(403).send('Please Login or Register');
-  }
-};
 
 //
 //
@@ -157,7 +150,7 @@ app.get('/urls/new', (req, res) => {
   };
   //If not logged in - render login page
   if (!templateVars.username) {
-    res.render('login', templateVars);
+    return res.render('not_logged_in', templateVars);
   }
   res.render('urls_new', templateVars);
 });
@@ -165,8 +158,11 @@ app.get('/urls/new', (req, res) => {
 
 //REQUEST MAIN PAGE
 app.get("/urls", (req, res) => {
-//If not logged in - returns error
-  notLoggedIn(req, res);
+  //If not logged in - returns error login page
+  if (!req.cookies["user_id"]) {
+    const templateVars = { username: undefined };
+    return res.render("not_logged_in", templateVars);
+  }
   const user = users[req.cookies["user_id"]];
   const userURL = urlForUser(user.id);
   const templateVars = {
@@ -179,28 +175,31 @@ app.get("/urls", (req, res) => {
 
 //REQUEST EDIT URL PAGE
 app.get("/urls/:shortURL", (req, res) => {
-//If not logged in - returns error
-  notLoggedIn(req, res);
+  //If not logged in - returns error login page
+  if (!req.cookies["user_id"]) {
+    const templateVars = { username: undefined };
+    return res.render("not_logged_in", templateVars);
+  }
   const user = users[req.cookies["user_id"]];
   const userURL = urlForUser(user.id);
-  //If URL is not linked to user - return error
-  if (!userURL[req.params.shortURL]) {
-    res.status(400).send('URL not linked to this user');
-  }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: userURL[req.params.shortURL]["longURL"],
     username: users[req.cookies["user_id"]]
   };
+  //If shortURL is insorrect - returns an error
+  if (!userURL[req.params.shortURL]) {
+    return res.status(400).send('URL not linked to this user');
+  }
   res.render("urls_show", templateVars);
 });
 
 
 //REQUEST LONG URL ROUTE (IS A GET BECAUSE THE SOURCE IS AN <A> LINK - TREAT LIKE A POST WITH THE REDIRECT)
 app.get("/u/:shortURL", (req, res) => {
-//If wrong URL is inputed - returns an error
+  //If wrong URL is inputed - returns an error
   if (!urlIsPresent(req.params.shortURL, urlDatabase)) {
-    res.status(400).send('Incorrect Short URL');
+    return res.status(400).send('Incorrect Short URL');
   }
   const longURL = urlDatabase[req.params.shortURL]["longURL"];
   res.redirect(longURL);
@@ -210,28 +209,28 @@ app.get("/u/:shortURL", (req, res) => {
 //
 
 //SUBMITTING NEW URL
-app.post("/urls", (req, res) => {
+app.post("/urls/new", (req, res) => {
   //If not logged in on submit new - returns an error
   if (!users[req.cookies["user_id"]]) {
-    res.status(403).send('Not logged In');
+    return res.status(403).send('Not logged In');
   }
   const key = generateRandomString();
   urlDatabase[key] = { longURL: req.body.longURL, userID: req.cookies["user_id"] };
-  res.redirect(`/urls/${ key }`);
+  res.redirect(`/urls/${key}`);
 });
-  
+
 
 //SUBMIT REGISTER
 app.post('/register', (req, res) => {
   const id = generateRandomString();
-  const {email, password} = req.body;
-  //If email or password are blank - return an error
+  const { email, password } = req.body;
+  //If email or password are blank - returns an error
   if (email === "" || password === "") {
-    res.status(400).send('Empty Email or Password');
+    return res.status(400).send('Empty Email or Password');
   }
   //If email is taken - return an error
   if (!emailNotPresent(email, users)) {
-    res.status(400).send('Email already taken');
+    return res.status(400).send('Email Unavailable');
   }
   users[id] = {
     "id": id,
@@ -245,15 +244,15 @@ app.post('/register', (req, res) => {
 
 //SUBMIT LOGIN
 app.post('/login', (req, res) => {
-  const {email, password} = req.body;
-  const user = locateID(email, users);
-  //If email isn't in database - return an error
+  const { email, password } = req.body;
+  const user = locateUserIdByEmail(email, users);
+  //If email isn't in database - returns an error
   if (emailNotPresent(email, users)) {
-    res.status(403).send('Incorrect Email');
+    return res.status(403).send('Incorrect Email');
   }
-  //If email is located but password does not match - return error
+  //If email is located but password does not match - returns an error
   if (password !== users[user]["password"]) {
-    res.status(403).send('Incorrect Password');
+    return res.status(403).send('Incorrect Password');
   }
   res.cookie("user_id", user);
   res.redirect(`/urls`);
@@ -269,11 +268,13 @@ app.post('/logout', (req, res) => {
 
 //SUBMIT EDITED ULR
 app.post('/urls/:shortURL', (req, res) => {
-  //If not logged in or If url not linked to user - return error
+  //If not logged in - returns an error
   if (!req.cookies["user_id"]) {
-    res.status(403).send('Not logged in');
-  } else if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL]["userID"]) {
-    res.status(403).send('URL not linked to this user');
+    return res.status(403).send('Not logged in');
+  }
+  //If url not linked to user - returns an error
+  if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL]["userID"]) {
+    return res.status(403).send('URL not linked to this user');
   }
   urlDatabase[req.params.shortURL]["longURL"] = req.body.longURL;
   res.redirect(`/urls`);
@@ -281,12 +282,14 @@ app.post('/urls/:shortURL', (req, res) => {
 
 
 //DELETE URL
-app.post("/urls/:shortURL/delete", (req,res) => {
-  //If not logged in or If url not linked to user - return error
+app.post("/urls/:shortURL/delete", (req, res) => {
+  //If not logged in - returns an error
   if (!req.cookies["user_id"]) {
-    res.status(403).send('Not logged in');
-  } else if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL]["userID"]) {
-    res.status(403).send('URL not linked to this user');
+    return res.status(403).send('Not logged in');
+  }
+  //If url not linked to user - returns an error
+  if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL]["userID"]) {
+    return res.status(403).send('URL not linked to this user');
   }
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
