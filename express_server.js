@@ -1,4 +1,5 @@
 const express = require("express");
+const methodOverride = require('method-override');
 const app = express();
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
@@ -10,6 +11,7 @@ const PORT = 8080; // default port 8080
 
 //MIDDLEWARE BEING RUN
 app.use(morgan('dev'));
+app.use(methodOverride('_method'));
 //Middleware to allow object/array deconstruction
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
@@ -251,7 +253,7 @@ app.post('/logout', (req, res) => {
 
 
 //SUBMIT EDITED ULR
-app.post('/urls/:shortURL', (req, res) => {
+app.put('/urls/:shortURL', (req, res) => {
   //If not logged in - returns an error
   if (!req.session.user_id) {
     return res.status(403).send('Not logged in');
@@ -267,7 +269,7 @@ app.post('/urls/:shortURL', (req, res) => {
 
 
 //DELETE URL
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
   //If not logged in - returns an error
   if (!req.session.user_id) {
     return res.status(403).send('Not logged in');
