@@ -36,7 +36,7 @@ const urlIsPresent = (shortURL, data) => {
 };
 
 //CREATES LIST OF USER SPECIFIC URLS
-const urlForUser = (id, data) => {
+const urlsForUser = (id, data) => {
   let result = {};
   for (let key in data) {
     if (id === data[key].userID)
@@ -45,4 +45,4 @@ const urlForUser = (id, data) => {
   return result;
 };
 
-module.exports =  {generateRandomString, emailNotPresent, getUserByEmail, urlIsPresent, urlForUser};
+module.exports =  {generateRandomString, emailNotPresent, getUserByEmail, urlIsPresent, urlsForUser};

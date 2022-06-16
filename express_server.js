@@ -15,7 +15,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
-  keys: ["key1"],
+  keys: ["key1", "key2", "key3"],
 
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
@@ -43,30 +43,26 @@ const urlDatabase = {
 const users = {
   "userRandomID": {
     id: "userRandomID",
-    email: "u@a.com",
-    password: bcrypt.hashSync("purple", 10)
+    email: "user@example.com",
+    password: "$2a$10$Sv4wwVbpJ3egcln9gtMnU.weqV0/Yfrvgoh1GP3hTiY1c0fVEnuxm" //Password - "purple-monkey-dinosaur"
   },
   "user2RandomID": {
     id: "user2RandomID",
-    email: "u2@a.com",
-    password: bcrypt.hashSync("funk", 10)
+    email: "user2@example.com",
+    password: "$2a$10$7T8hMUiuaWTqPt5IAQ1jRuoFsuD8.Zf8OvmNrSuH3vbUHho9Va0Li" //Password - "dishwasher-funk"
   }
 };
 
+
 //
 //
+
+//SERVER RESPONSE IN CONSOLE WHEN STARTED
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
 //ROUTING
-
-//HOMEPAGE
-app.get("/", (req, res) => {
-  //If not logged in - returns error login page
-  if (!req.session.user_id) {
-    const templateVars = { username: undefined };
-    return res.render("not_logged_in", templateVars);
-  }
-  res.redirect('/urls');
-});
 
 //REQUEST FOR URLS IN JSON FORMAT
 app.get("/urls.json", (req, res) => {
@@ -78,9 +74,16 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//SERVER RESPONSE IN CONSOLE WHEN STARTED
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+
+//HOMEPAGE
+app.get("/", (req, res) => {
+  //If not logged in - returns not_logded_in page
+  if (!req.session.user_id) {
+    const templateVars = { username: undefined };
+    return res.render("not_logged_in", templateVars);
+  }
+  //Directs user to /urls
+  res.redirect('/urls');
 });
 
 
@@ -93,6 +96,7 @@ app.get(`/register`, (req, res) => {
   const templateVars = {
     username: users[req.session.user_id]
   };
+  //Renders the registion page
   res.render(`register`, templateVars);
 });
 
@@ -106,6 +110,7 @@ app.get('/login', (req, res) => {
   const templateVars = {
     username: users[req.session.user_id]
   };
+  //Renders the login page
   res.render(`login`, templateVars);
 });
 
@@ -119,19 +124,21 @@ app.get('/urls/new', (req, res) => {
   if (!templateVars.username) {
     return res.render('not_logged_in', templateVars);
   }
+  //Renders the create page
   res.render('urls_new', templateVars);
 });
 
 
-//REQUEST MAIN PAGE
+//REQUEST LIST PAGE
 app.get("/urls", (req, res) => {
-  //If not logged in - returns error login page
+//If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
     const templateVars = { username: undefined };
     return res.render("not_logged_in", templateVars);
   }
+  //Renders main page url list
   const user = users[req.session.user_id];
-  const userURL = helpers.urlForUser(user.id, urlDatabase);
+  const userURL = helpers.urlsForUser(user.id, urlDatabase);
   const templateVars = {
     urls: userURL,
     username: user
@@ -142,7 +149,7 @@ app.get("/urls", (req, res) => {
 
 //REQUEST EDIT URL PAGE
 app.get("/urls/:shortURL", (req, res) => {
-  //If not logged in - returns error login page
+//If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
     const templateVars = { username: undefined };
     return res.render("not_logged_in", templateVars);
@@ -152,11 +159,12 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.status(400).send('Short URL does not exist');
   }
   const user = users[req.session.user_id];
-  const userURL = helpers.urlForUser(user.id, urlDatabase);
+  const userURL = helpers.urlsForUser(user.id, urlDatabase);
   //If shortURL is insorrect - returns an error
   if (!userURL[req.params.shortURL]) {
     return res.status(400).send('Short URL not linked to this user');
   }
+  //Renders the short URL page
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: userURL[req.params.shortURL].longURL,
@@ -166,12 +174,13 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 
-//REQUEST LONG URL ROUTE (IS A GET BECAUSE THE SOURCE IS AN <A> LINK - TREAT LIKE A POST WITH THE REDIRECT)
+//REQUEST LONG URL ROUTE (IS A GET BECAUSE THE SOURCE IS AN <A> LINK)
 app.get("/u/:shortURL", (req, res) => {
   //If wrong URL is inputed - returns an error
   if (!helpers.urlIsPresent(req.params.shortURL, urlDatabase)) {
     return res.status(400).send('Incorrect Short URL');
   }
+  //Directs user to long URL's website
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
@@ -185,6 +194,7 @@ app.post("/urls/new", (req, res) => {
   if (!users[req.session.user_id]) {
     return res.status(403).send('Not logged In');
   }
+  //Addes user created short URL with their id to `urlDatabase` and redirects user to the new URL's page
   const key = helpers.generateRandomString();
   urlDatabase[key] = { longURL: req.body.longURL, userID: req.session.user_id };
   res.redirect(`/urls/${key}`);
@@ -202,6 +212,7 @@ app.post('/register', (req, res) => {
   if (!helpers.emailNotPresent(email, users)) {
     return res.status(400).send('Email Unavailable');
   }
+  //Adds user data with a randomized id into `users` database and directs user to /urls
   const id = helpers.generateRandomString();
   const hashedPassword = bcrypt.hashSync(password, 10);
   users[id] = {
@@ -226,6 +237,7 @@ app.post('/login', (req, res) => {
   if (!bcrypt.compareSync(password, users[user].password)) {
     return res.status(403).send('Incorrect Password');
   }
+  //Logs user in by giving encrypted cookie and directs user to /urls
   req.session.user_id = user;
   res.redirect(`/urls`);
 });
@@ -248,6 +260,7 @@ app.post('/urls/:shortURL', (req, res) => {
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send('URL not linked to this user');
   }
+  //Edits specific URL and directs user to /urls page
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
   res.redirect(`/urls`);
 });
@@ -263,6 +276,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send('URL not linked to this user');
   }
+  //Delets specific URL and directs user to /urls page
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
