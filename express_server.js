@@ -81,7 +81,11 @@ app.get("/hello", (req, res) => {
 app.get("/", (req, res) => {
   //If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
-    const templateVars = { username: undefined };
+    const templateVars = { 
+      username: undefined,
+      error: false, 
+      reason: ''
+     };
     return res.render("not_logged_in", templateVars);
   }
   //Directs user to /urls
@@ -96,9 +100,11 @@ app.get(`/register`, (req, res) => {
     return res.redirect('/urls');
   }
   const templateVars = {
-    username: users[req.session.user_id]
+    username: users[req.session.user_id],
+    error: false, 
+    reason: ''
   };
-  //Renders the registion page
+  
   res.render(`register`, templateVars);
 });
 
@@ -110,9 +116,10 @@ app.get('/login', (req, res) => {
     return res.redirect('/urls');
   }
   const templateVars = {
-    username: users[req.session.user_id]
+    username: users[req.session.user_id],
+    error: false, 
+    reason: ''
   };
-  //Renders the login page
   res.render(`login`, templateVars);
 });
 
@@ -120,7 +127,9 @@ app.get('/login', (req, res) => {
 //REQUEST CREATE PAGE
 app.get('/urls/new', (req, res) => {
   const templateVars = {
-    username: users[req.session.user_id]
+    username: users[req.session.user_id],
+    error: false, 
+    reason: ''
   };
   //If not logged in - render login page
   if (!templateVars.username) {
@@ -135,7 +144,11 @@ app.get('/urls/new', (req, res) => {
 app.get("/urls", (req, res) => {
 //If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
-    const templateVars = { username: undefined };
+    const templateVars = {
+      username: users[req.session.user_id],
+      error: false, 
+      reason: ''
+    };
     return res.render("not_logged_in", templateVars);
   }
   //Renders main page url list
@@ -153,7 +166,11 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
 //If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
-    const templateVars = { username: undefined };
+    const templateVars = {
+      username: users[req.session.user_id],
+      error: false, 
+      reason: ''
+    };
     return res.render("not_logged_in", templateVars);
   }
   //If short url isn't in database - returns an error
@@ -208,13 +225,24 @@ app.post('/register', (req, res) => {
   const { email, password } = req.body;
   //If email or password are blank - returns an error
   if (email === "" || password === "") {
-    return res.status(400).send('Empty Email or Password');
+    const templateVars = {
+      username: users[req.session.user_id],
+      error: true, 
+      reason:' Empty Email or Password'
+    }
+    return res.status(400).render(`register`, templateVars);
+    // return res.status(400).send('Empty Email or Password');
   }
   //If email is taken - return an error
   if (!helpers.emailNotPresent(email, users)) {
-    return res.status(400).send('Email Unavailable');
+    const templateVars = {
+      username: users[req.session.user_id],
+      error: true, 
+      reason:' Email Unavailable'
+    }
+    return res.status(400).render(`register`, templateVars);
+    // return res.status(400).send('Email Unavailable');
   }
-  //Adds user data with a randomized id into `users` database and directs user to /urls
   const id = helpers.generateRandomString();
   const hashedPassword = bcrypt.hashSync(password, 10);
   users[id] = {
@@ -233,11 +261,23 @@ app.post('/login', (req, res) => {
   const user = helpers.getUserByEmail(email, users);
   //If email isn't in database - returns an error
   if (helpers.emailNotPresent(email, users)) {
-    return res.status(403).send('Incorrect Email');
+    const templateVars = {
+      username: users[req.session.user_id],
+      error: true, 
+      reason:' Incorrect Email'
+    }
+    return res.status(400).render(`login`, templateVars);
+    // return res.status(403).send('Incorrect Email');
   }
   //If email is located but password does not match - returns an error
   if (!bcrypt.compareSync(password, users[user].password)) {
-    return res.status(403).send('Incorrect Password');
+    const templateVars = {
+      username: users[req.session.user_id],
+      error: true, 
+      reason:' Incorrect Password'
+    }
+    return res.status(400).render(`login`, templateVars);
+    // return res.status(403).send('Incorrect Password');
   }
   //Logs user in by giving encrypted cookie and directs user to /urls
   req.session.user_id = user;
@@ -282,3 +322,7 @@ app.delete("/urls/:shortURL", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
+
+
+
+
