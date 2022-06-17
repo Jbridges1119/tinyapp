@@ -309,6 +309,7 @@ app.put('/urls/:shortURL', (req, res) => {
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
   urlDatabase[req.params.shortURL].total = 0;
   urlDatabase[req.params.shortURL].unique = 0;
+  urlDatabase[req.params.shortURL].info = []
   res.redirect(`/urls`);
 });
 
