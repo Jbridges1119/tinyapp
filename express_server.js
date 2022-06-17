@@ -33,11 +33,17 @@ app.use(cookieSession({
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW"
+    userID: "aJ48lW",
+    total: 0,
+    unique: 0,
+    info: []
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "sgq3y6"
+    userID: "sgq3y6",
+    total: 0,
+    unique: 0,
+    info: []
   }
 };
 
@@ -182,7 +188,10 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: userURL[req.params.shortURL].longURL,
-    username: users[req.session.user_id]
+    username: users[req.session.user_id],
+    total: urlDatabase[req.params.shortURL].total,
+    unique: urlDatabase[req.params.shortURL].unique,
+    info: urlDatabase[req.params.shortURL].info
   };
   res.render("urls_show", templateVars);
 });
@@ -195,6 +204,13 @@ app.get("/u/:shortURL", (req, res) => {
     return res.status(400).send('Incorrect Short URL');
   }
   const longURL = urlDatabase[req.params.shortURL].longURL;
+  urlDatabase[req.params.shortURL].total += 1;
+  if (!req.session.unique) {
+    const key = helpers.generateRandomString();
+    req.session.unique = key;
+    urlDatabase[req.params.shortURL].info.push({time: Date.now(), GID: key});
+    urlDatabase[req.params.shortURL].unique += 1;
+  }
   res.redirect(longURL);
 });
 
@@ -208,7 +224,7 @@ app.post("/urls/new", (req, res) => {
     return res.status(403).send('Not logged In');
   }
   const key = helpers.generateRandomString();
-  urlDatabase[key] = { longURL: req.body.longURL, userID: req.session.user_id };
+  urlDatabase[key] = { longURL: req.body.longURL, userID: req.session.user_id, total: 0, unique: 0, info: [] };
   res.redirect(`/urls/${key}`);
 });
 
@@ -291,6 +307,8 @@ app.put('/urls/:shortURL', (req, res) => {
     return res.status(403).send('URL not linked to this user');
   }
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+  urlDatabase[req.params.shortURL].total = 0;
+  urlDatabase[req.params.shortURL].unique = 0;
   res.redirect(`/urls`);
 });
 
