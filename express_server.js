@@ -81,14 +81,13 @@ app.get("/hello", (req, res) => {
 app.get("/", (req, res) => {
   //If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
-    const templateVars = { 
+    const templateVars = {
       username: undefined,
-      error: false, 
+      error: false,
       reason: ''
-     };
+    };
     return res.render("not_logged_in", templateVars);
   }
-  //Directs user to /urls
   res.redirect('/urls');
 });
 
@@ -101,10 +100,9 @@ app.get(`/register`, (req, res) => {
   }
   const templateVars = {
     username: users[req.session.user_id],
-    error: false, 
+    error: false,
     reason: ''
   };
-  
   res.render(`register`, templateVars);
 });
 
@@ -117,7 +115,7 @@ app.get('/login', (req, res) => {
   }
   const templateVars = {
     username: users[req.session.user_id],
-    error: false, 
+    error: false,
     reason: ''
   };
   res.render(`login`, templateVars);
@@ -128,14 +126,13 @@ app.get('/login', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const templateVars = {
     username: users[req.session.user_id],
-    error: false, 
+    error: false,
     reason: ''
   };
   //If not logged in - render login page
   if (!templateVars.username) {
     return res.render('not_logged_in', templateVars);
   }
-  //Renders the create page
   res.render('urls_new', templateVars);
 });
 
@@ -146,12 +143,11 @@ app.get("/urls", (req, res) => {
   if (!req.session.user_id) {
     const templateVars = {
       username: users[req.session.user_id],
-      error: false, 
+      error: false,
       reason: ''
     };
     return res.render("not_logged_in", templateVars);
   }
-  //Renders main page url list
   const user = users[req.session.user_id];
   const userURL = helpers.urlsForUser(user.id, urlDatabase);
   const templateVars = {
@@ -168,7 +164,7 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!req.session.user_id) {
     const templateVars = {
       username: users[req.session.user_id],
-      error: false, 
+      error: false,
       reason: ''
     };
     return res.render("not_logged_in", templateVars);
@@ -183,7 +179,6 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!userURL[req.params.shortURL]) {
     return res.status(400).send('Short URL not linked to this user');
   }
-  //Renders the short URL page
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: userURL[req.params.shortURL].longURL,
@@ -199,7 +194,6 @@ app.get("/u/:shortURL", (req, res) => {
   if (!helpers.urlIsPresent(req.params.shortURL, urlDatabase)) {
     return res.status(400).send('Incorrect Short URL');
   }
-  //Directs user to long URL's website
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
@@ -213,7 +207,6 @@ app.post("/urls/new", (req, res) => {
   if (!users[req.session.user_id]) {
     return res.status(403).send('Not logged In');
   }
-  //Addes user created short URL with their id to `urlDatabase` and redirects user to the new URL's page
   const key = helpers.generateRandomString();
   urlDatabase[key] = { longURL: req.body.longURL, userID: req.session.user_id };
   res.redirect(`/urls/${key}`);
@@ -227,21 +220,19 @@ app.post('/register', (req, res) => {
   if (email === "" || password === "") {
     const templateVars = {
       username: users[req.session.user_id],
-      error: true, 
+      error: true,
       reason:' Empty Email or Password'
-    }
+    };
     return res.status(400).render(`register`, templateVars);
-    // return res.status(400).send('Empty Email or Password');
   }
   //If email is taken - return an error
   if (!helpers.emailNotPresent(email, users)) {
     const templateVars = {
       username: users[req.session.user_id],
-      error: true, 
+      error: true,
       reason:' Email Unavailable'
-    }
+    };
     return res.status(400).render(`register`, templateVars);
-    // return res.status(400).send('Email Unavailable');
   }
   const id = helpers.generateRandomString();
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -263,23 +254,20 @@ app.post('/login', (req, res) => {
   if (helpers.emailNotPresent(email, users)) {
     const templateVars = {
       username: users[req.session.user_id],
-      error: true, 
+      error: true,
       reason:' Incorrect Email'
-    }
+    };
     return res.status(400).render(`login`, templateVars);
-    // return res.status(403).send('Incorrect Email');
   }
   //If email is located but password does not match - returns an error
   if (!bcrypt.compareSync(password, users[user].password)) {
     const templateVars = {
       username: users[req.session.user_id],
-      error: true, 
+      error: true,
       reason:' Incorrect Password'
-    }
+    };
     return res.status(400).render(`login`, templateVars);
-    // return res.status(403).send('Incorrect Password');
   }
-  //Logs user in by giving encrypted cookie and directs user to /urls
   req.session.user_id = user;
   res.redirect(`/urls`);
 });
@@ -302,7 +290,6 @@ app.put('/urls/:shortURL', (req, res) => {
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send('URL not linked to this user');
   }
-  //Edits specific URL and directs user to /urls page
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
   res.redirect(`/urls`);
 });
@@ -318,11 +305,6 @@ app.delete("/urls/:shortURL", (req, res) => {
   if (req.session.user_id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send('URL not linked to this user');
   }
-  //Delets specific URL and directs user to /urls page
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
-
-
-
-
