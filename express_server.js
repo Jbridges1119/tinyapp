@@ -199,7 +199,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
 //REQUEST LONG URL ROUTE (IS A GET BECAUSE THE SOURCE IS AN <A> LINK)
 app.get("/u/:shortURL", (req, res) => {
-  //If wrong URL is inputed - returns an error
+  //If wrong URL is inputted - returns an error
   if (!helpers.urlIsPresent(req.params.shortURL, urlDatabase)) {
     return res.status(400).send('Incorrect Short URL');
   }
@@ -208,7 +208,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (!req.session.unique) {
     const key = helpers.generateRandomString();
     req.session.unique = key;
-    urlDatabase[req.params.shortURL].info.push({time: Date.now(), GID: key});
+    urlDatabase[req.params.shortURL].info.push({time: new Date(), GID: key});
     urlDatabase[req.params.shortURL].unique += 1;
   }
   res.redirect(longURL);

@@ -17,7 +17,7 @@
         </h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
         <p class="card-text">Total Use: <%= total %></a></p>
-        <p class="card-text">Unique Use: <%= unique %></a></p>
+        <p class="card-text">Unique Visitor: <%= unique %></a></p>
       </div>
       <div class="card-footer text-muted">
         <h2 class="card-title">Edit</h2>
@@ -29,12 +29,26 @@
         </form>
       </div>
     </div>
-    <div class="text-center">
-      <% if (info.length) { %>
+    <% if (info.length) { %>
+    <table class="table">
+        <tr>
+          <th scope="col"><h3>#</h3></th>
+          <th scope="col"><h3>Visitor ID:</h3></th>
+          <th scope="col"><h3>Date:</h3></th>
+        </tr>
+      <% let number = 0 %>
         <% for(let num of info) {%>
-    <p class="card-text">Timestamp: <%= num.time %>  -  GenericID: <%= num.GID %></a></p>
-    <% }}%>
-  </div>
+          <% number++ %>
+        <tr>
+          <th scope="row">
+            <%= number %>
+          </th>
+          <td><%= num.GID %></td>
+          <td><%=  num.time %></td>
+        </tr>
+        <% } %>
+    </table>
+    <% } %>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
