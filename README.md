@@ -1,6 +1,8 @@
 # TinyApp Project
 
-TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly). Start by registering to TinyApp to begin you personalized experience. Create new short URL's that will be stored on your personal list. Only you will have access to editing and deleting your created links but everyone can share your tiny links!
+TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly). Start by registering to TinyApp to begin you personalized experience. Create new short URL's that will be stored on your personal list. Only you will have access to editing and deleting your created links but everyone can share your tiny links! 
+
+V2.0 - Now with url tracking. See total uses of your TinyURL and track when a new user clicked it!
 
 ## Final Product
 
@@ -9,6 +11,9 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 #### Personalized URL list!
 !["screenshot of main page"](https://github.com/Jbridges1119/tinyapp/blob/master/docs/urls.png?raw=true)
+
+#### URL Tracking!
+!["screenshot of Tracking/Edit page"](https://github.com/Jbridges1119/tinyapp/raw/master/docs/Tracking.png)
 
 ## Dependencies
 
@@ -19,6 +24,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 - body-parser
 - cookie-session
 - Morgan
+- Method-override
 
 
 ## Getting Started
