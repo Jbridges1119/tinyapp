@@ -1,4 +1,5 @@
 const express = require("express");
+//ALLOWS FOR MORE METHODS THAN POST AND GET
 const methodOverride = require('method-override');
 const app = express();
 const morgan = require("morgan");
@@ -6,7 +7,7 @@ const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const helpers = require('./helpers');
-const PORT = 8080; // default port 8080
+const PORT = process.env.PORT || 5000
 
 
 //MIDDLEWARE BEING RUN
@@ -145,7 +146,7 @@ app.get('/urls/new', (req, res) => {
 
 //REQUEST LIST PAGE
 app.get("/urls", (req, res) => {
-//If not logged in - returns not_logded_in page
+  //If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
     const templateVars = {
       username: users[req.session.user_id],
@@ -166,7 +167,7 @@ app.get("/urls", (req, res) => {
 
 //REQUEST EDIT URL PAGE
 app.get("/urls/:shortURL", (req, res) => {
-//If not logged in - returns not_logded_in page
+  //If not logged in - returns not_logded_in page
   if (!req.session.user_id) {
     const templateVars = {
       username: users[req.session.user_id],
@@ -208,7 +209,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (!req.session.unique) {
     const key = helpers.generateRandomString();
     req.session.unique = key;
-    urlDatabase[req.params.shortURL].info.push({time: new Date(), GID: key});
+    urlDatabase[req.params.shortURL].info.push({ time: new Date(), GID: key });
     urlDatabase[req.params.shortURL].unique += 1;
   }
   res.redirect(longURL);
@@ -237,7 +238,7 @@ app.post('/register', (req, res) => {
     const templateVars = {
       username: users[req.session.user_id],
       error: true,
-      reason:' Empty Email or Password'
+      reason: ' Empty Email or Password'
     };
     return res.status(400).render(`register`, templateVars);
   }
@@ -246,7 +247,7 @@ app.post('/register', (req, res) => {
     const templateVars = {
       username: users[req.session.user_id],
       error: true,
-      reason:' Email Unavailable'
+      reason: ' Email Unavailable'
     };
     return res.status(400).render(`register`, templateVars);
   }
@@ -271,7 +272,7 @@ app.post('/login', (req, res) => {
     const templateVars = {
       username: users[req.session.user_id],
       error: true,
-      reason:' Incorrect Email'
+      reason: ' Incorrect Email'
     };
     return res.status(400).render(`login`, templateVars);
   }
@@ -280,7 +281,7 @@ app.post('/login', (req, res) => {
     const templateVars = {
       username: users[req.session.user_id],
       error: true,
-      reason:' Incorrect Password'
+      reason: ' Incorrect Password'
     };
     return res.status(400).render(`login`, templateVars);
   }
@@ -327,3 +328,6 @@ app.delete("/urls/:shortURL", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
+
+
+
