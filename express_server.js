@@ -7,7 +7,7 @@ const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const helpers = require('./helpers');
-const PORT = process.env.PORT || 5000
+const PORT =  8004
 
 
 //MIDDLEWARE BEING RUN
